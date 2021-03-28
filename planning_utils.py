@@ -112,7 +112,7 @@ def create_grid_and_edges(data, drone_altitude, safety_distance):
             p2 = (p2[0], p2[1])
             edges.append((p1, p2))
 
-    return grid, edges
+    return grid, edges, int(north_min), int(east_min)
 
 
 
@@ -160,6 +160,16 @@ def valid_actions(grid, current_node):
         valid_actions.remove(Action.WEST)
     if y + 1 > m or grid[x, y + 1] == 1:
         valid_actions.remove(Action.EAST)
+
+    if (x - 1 < 0 or y - 1 < 0) or grid[x - 1, y - 1] == 1:
+        valid_actions.remove(Action.NORTH_WEST)
+    if (x - 1 < 0 or y + 1 > m) or grid[x - 1, y + 1] == 1:
+        valid_actions.remove(Action.NORTH_EAST)
+    if (x + 1 > n or y - 1 < 0) or grid[x + 1, y - 1] == 1:
+        valid_actions.remove(Action.SOUTH_WEST)
+    if (x + 1 > n or y + 1 > m) or grid[x + 1, y + 1] == 1:
+        valid_actions.remove(Action.SOUTH_EAST)
+
 
     return valid_actions
 
@@ -219,6 +229,63 @@ def a_star(grid, h, start, goal):
 
 def heuristic(position, goal_position):
     return np.linalg.norm(np.array(position) - np.array(goal_position))
+
+'************************************method to search the graph********************************************************'
+
+def heuristic_graph(n1, n2):
+    return LA.norm(np.array(n2) - np.array(n1))
+
+def a_star_graph(graph, h, start, goal):
+    """Modified A* to work with NetworkX graphs."""
+
+    path = []
+    path_cost = 0
+    queue = PriorityQueue()
+    queue.put((0, start))
+    visited = set(start)
+
+    branch = {}
+    found = False
+
+    while not queue.empty():
+        item = queue.get()
+        current_node = item[1]
+        if current_node == start:
+            current_cost = 0.0
+        else:
+            current_cost = branch[current_node][0]
+
+        if current_node == goal:
+            print('Found a path.')
+            found = True
+            break
+        else:
+            for next_node in graph[current_node]:
+                cost = graph.edges[current_node, next_node]['weight']
+                branch_cost = current_cost + cost
+                queue_cost = branch_cost + h(next_node, goal)
+
+                if next_node not in visited:
+                    visited.add(next_node)
+                    branch[next_node] = (branch_cost, current_node)
+                    queue.put((queue_cost, next_node))
+
+    if found:
+        # retrace steps
+        n = goal
+        path_cost = branch[n][0]
+        path.append(goal)
+        while branch[n][1] != start:
+            path.append(branch[n][1])
+            n = branch[n][1]
+        path.append(branch[n][1])
+    else:
+        print('**********************')
+        print('Failed to find a path!')
+        print('**********************')
+    return path[::-1], path_cost
+
+'***************************************************************************************************************'
 
 def prune_path(path, epsilon=1e-6):
 
