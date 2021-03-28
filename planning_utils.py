@@ -285,6 +285,22 @@ def a_star_graph(graph, h, start, goal):
         print('**********************')
     return path[::-1], path_cost
 
+
+def closest_point(graph, current_point):
+    """
+    Compute the closest point in the `graph`
+    to the `current_point`.
+    """
+    closest_point = None
+    dist = 100000
+    for p in graph.nodes:
+        d = LA.norm(np.array(p) - np.array(current_point))
+        if d < dist:
+            closest_point = p
+            dist = d
+    return closest_point
+
+
 '***************************************************************************************************************'
 
 def prune_path(path, epsilon=1e-6):
